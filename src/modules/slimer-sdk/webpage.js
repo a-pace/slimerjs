@@ -1146,15 +1146,15 @@ function _create(parentWebpageInfo) {
             return true;
         },
 
-        
+
         /**
          * Stop JavaScript within a onLongRunningScript callback.
-         * Called outside of onLongRunningScript it does nothing. 
+         * Called outside of onLongRunningScript it does nothing.
          */
         stopJavaScript : function stopJavaScript () {
             stopJavaScript.__interrupt__ = true;
         },
-        
+
         onError : phantom.defaultErrorHandler,
 
         // --------------------------------- content manipulation
@@ -1479,7 +1479,7 @@ function _create(parentWebpageInfo) {
          *
          *  format: "A4" etc.
          *  orientation: "landscape" or "portrait"
-         *  dimension: supported unit 
+         *  dimension: supported unit
          */
         get paperSize () {
             return privProp.paperSize;
@@ -1508,10 +1508,23 @@ function _create(parentWebpageInfo) {
 
             let file = fs.absolute(filename);
 
+            let merge = function (obj1, obj2) {
+              let cpy = function (o1, o2) {
+                for (let attr in o2) {
+                  o1[attr] = o2[attr];
+                }
+              };
+
+              var res = {};
+              cpy(res, obj1);
+              cpy(res, obj2);
+              return res;
+            };
+
             try {
                 let finalOptions = webpageUtils.getScreenshotOptions(this, options, fs.extension(file));
                 if (finalOptions.format == 'pdf') {
-                    let printOptions = webpageUtils.getPrintOptions(this, browser.contentWindow, file, finalOptions);
+                    let printOptions = webpageUtils.getPrintOptions(this, browser.contentWindow, file, merge(finalOptions, options));
                     if (printOptions === null) {
                         return false;
                     }
@@ -1604,7 +1617,7 @@ function _create(parentWebpageInfo) {
         onFilePicker : null,
 
         onPrompt : null,
-        
+
         onLongRunningScript : null,
 
         // ------------------------------ browsing callbacks
@@ -1741,4 +1754,3 @@ function _create(parentWebpageInfo) {
     // initialization
     return openBlankBrowser(false);
 } // end of _create
-

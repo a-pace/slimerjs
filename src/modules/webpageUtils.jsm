@@ -274,7 +274,7 @@ var webpageUtils = {
      * @param nsIURI uri
      */
     setWindowContent: function (docShell, htmlContent, uri) {
-        
+
         // prepare input stream and channel
         var stringStream = Cc["@mozilla.org/io/string-input-stream;1"]
                             .createInstance(Ci.nsIStringInputStream);
@@ -502,83 +502,52 @@ var webpageUtils = {
             return parseFloat(s) / currentScreenDPI;
         };
 
+        let value = function (prop, defaultValue) {
+          if (typeof(options[prop]) !== 'undefined') {
+            return options[prop];
+          } else {
+            return defaultValue;
+          }
+        };
+
         let printSettings = Cc["@mozilla.org/gfx/printsettings-service;1"]
                                 .getService(Ci.nsIPrintSettingsService)
                                 .newPrintSettings;
         printSettings.printSilent             = true;
         printSettings.showPrintProgress       = false;
-        printSettings.printBGImages           = true;
-        printSettings.printBGColors           = true;
+        printSettings.printBGImages           = value('printBGImages', true);
+        printSettings.printBGColors           = value('printBGColors', true);
         printSettings.printToFile             = true;
         printSettings.toFileName              = file;
         printSettings.printFrameType          = Ci.nsIPrintSettings.kFramesAsIs;
         printSettings.outputFormat            = Ci.nsIPrintSettings.kOutputFormatPDF;
-        printSettings.footerStrCenter         = "";
-        printSettings.footerStrLeft           = "";
-        printSettings.footerStrRight          = "";
-        printSettings.headerStrCenter         = "";
-        printSettings.headerStrLeft           = "";
-        printSettings.headerStrRight          = "";
-        printSettings.marginTop               = 0;
-        printSettings.marginRight             = 0;
-        printSettings.marginBottom            = 0;
-        printSettings.marginLeft              = 0;
-        printSettings.unwriteableMarginTop    = 0;
-        printSettings.unwriteableMarginRight  = 0;
-        printSettings.unwriteableMarginBottom = 0;
-        printSettings.unwriteableMarginLeft   = 0;
-        printSettings.resolution              = 300;
+        printSettings.footerStrCenter         = value('footerStrCenter', "");
+        printSettings.footerStrLeft           = value('footerStrLeft', "");
+        printSettings.footerStrRight          = value('footerStrRight', "");
+        printSettings.headerStrCenter         = value('headerStrCenter', "");
+        printSettings.headerStrLeft           = value('headerStrLeft', "");
+        printSettings.headerStrRight          = value('headerStrRight', "");
+        printSettings.marginTop               = value('marginTop', 0);
+        printSettings.marginRight             = value('marginRight', 0);
+        printSettings.marginBottom            = value('marginBottom', 0);
+        printSettings.marginLeft              = value('marginLeft', 0);
+        printSettings.unwriteableMarginTop    = value('unwriteableMarginTop', 0);
+        printSettings.unwriteableMarginRight  = value('unwriteableMarginRight', 0);
+        printSettings.unwriteableMarginBottom = value('unwriteableMarginBottom', 0);
+        printSettings.unwriteableMarginLeft   = value('unwriteableMarginLeft', 0);
+        printSettings.resolution              = value('resolution', 300);
         printSettings.paperSizeUnit           = Ci.nsIPrintSettings.kPaperSizeInches;
         printSettings.scaling                 = options.ratio;
+        printSettings.colorspace              = value('colorspace', 'CMYK');
+        printSettings.paperName               = value('paperName', 'Letter');
+        printSettings.paperWidth              = stringToInches(options.paperWidth);
+        printSettings.paperHeight             = stringToInches(options.paperHeight);
+        printSettings.paperSizeType           = printSettings.kPaperSizeDefined;
+        printSettings.shrinkToFit             = value('shrinkToFit', false);
 
-        if ('width' in paperSize && 'height' in paperSize) {
-            printSettings.paperSizeType =  printSettings.kPaperSizeDefined;
-            printSettings.paperName = 'Custom';
-            printSettings.paperWidth = stringToInches(paperSize.width);
-            printSettings.paperHeight = stringToInches(paperSize.height);
-            printSettings.shrinkToFit = false;
-        } else {
-            // for now, we trust the printer config to have the format we want
-            printSettings.paperName = paperSize.format;
-            printSettings.paperSizeType  = printSettings.kPaperSizeNativeData;
-            if ("orientation" in paperSize) {
-                if (paperSize.orientation == "landscape") {
-                    printSettings.orientation = printSettings.kLandscapeOrientation;
-                } else {
-                    printSettings.orientation = printSettings.kPortraitOrientation;
-                }
-            }
-        }
-
-        if ("border" in paperSize && !("margin" in paperSize)) {
-            // backwards compatibility with old PhantomJS versions
-            paperSize.margin = paperSize.border;
-        }
-        if ("margin" in paperSize) {
-            if (typeof paperSize.marging == "object") {
-                let getMargin = function(border) {
-                    if (border in paperSize.margin) {
-                        return stringToInches(paperSize.margin[border]);
-                    } else {
-                        return 0
-                    }
-                }
-                printSettings.marginTop = getMargin('top');
-                printSettings.marginRight = getMargin('right');
-                printSettings.marginBottom = getMargin('bittom');
-                printSettings.marginLeft = getMargin('left');
-            }
-            else {
-                let margin = stringToInches(paperSize.margin);
-                printSettings.marginTop = margin;
-                printSettings.marginRight = margin;
-                printSettings.marginBottom = margin;
-                printSettings.marginLeft = margin;
-            }
-        }
         return printSettings;
     },
-    
+
     /**
      * print the given content window into a PDF.
      * The code has been inspired by
